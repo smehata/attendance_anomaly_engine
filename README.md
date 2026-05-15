@@ -31,17 +31,17 @@ and their time complexity characteristics. Let:
 1) get_anomaly_rule(shift)
    - What it does: Fetches the active anomaly rule for the given shift type (DB query, limit=1).
    - Usage: Called when evaluating a record's shift to load rule thresholds (grace periods, thresholds).
-   - Time complexity: O(1) (single DB lookup).
+   - Time complexity: O(1).
 
 2) create_anomaly_attendance(**data)
    - What it does: Creates and inserts a new `Attendance Anomaly` document.
    - Usage: Invoked whenever an anomaly condition is detected.
-   - Time complexity: O(1) (single DB insert).
+   - Time complexity: O(1).
 
 3) mark_in_attendance_anomaly_rule_applied(attendance)
    - What it does: Marks an Attendance record to indicate rules were applied (DB update).
    - Usage: Called once per attendance record after processing.
-   - Time complexity: O(1) (single DB update).
+   - Time complexity: O(1).
 
 4) process_attendance()
    - What it does: Top-level entry point. Loads active employees and enqueues background jobs
