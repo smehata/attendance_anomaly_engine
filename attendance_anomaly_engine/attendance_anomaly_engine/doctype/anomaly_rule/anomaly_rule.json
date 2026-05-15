@@ -14,7 +14,6 @@
   "late_entry_grace_period",
   "early_exit_grace_period",
   "column_break_rret",
-  "half_day_threshold_hours",
   "night_shifts_consecutive",
   "streak_detection_section",
   "consecutive_absences",
@@ -77,13 +76,6 @@
   },
   {
    "default": "0",
-   "description": "Working hours below which Half Day is marked. (Zero to disable)",
-   "fieldname": "half_day_threshold_hours",
-   "fieldtype": "Float",
-   "label": "Working Hours Threshold for Half Day"
-  },
-  {
-   "default": "0",
    "description": "The delta for a night-shift employee after several consecutive night shifts should be auto-waived ( In Days). (Zero to disable)",
    "fieldname": "night_shifts_consecutive",
    "fieldtype": "Int",
@@ -127,7 +119,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-05-14 22:07:47.974226",
+ "modified": "2026-05-15 16:36:42.021356",
  "modified_by": "Administrator",
  "module": "Attendance Anomaly Engine",
  "name": "Anomaly Rule",

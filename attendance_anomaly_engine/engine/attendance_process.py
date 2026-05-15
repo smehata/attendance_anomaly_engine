@@ -56,16 +56,14 @@ def process_attendance():
 
 def get_attendance_records(employees, start_date):
 	# Get the start date setting for anomaly detection
-	anomaly_setting = frappe.get_single("Anomaly Setting")
-	ANOMALY_START_DATE = anomaly_setting.start_date
 
 	# Fetch all submitted attendance records for given employees from start date onwards
 	attendance_records = frappe.get_all(
 		"Attendance",
 		filters={
 			"employee": ["in", employees],
-			"attendance_date": [">=", ANOMALY_START_DATE],
-			# "custom_is_anomaly_rules_applied": 0,
+			"attendance_date": [">=", start_date],
+			"custom_is_anomaly_rules_applied": 0,
 			"docstatus": 1
 		},
 		fields=[
