@@ -5,8 +5,13 @@ from frappe.utils import flt, get_time, add_days, cint, getdate
 
 
 def get_anomaly_rule(shift):
+	shift_exists = frappe.cache().get_value(shift)
+	if shift_exists:
+		return shift_exists
+
 	anomaly_rules = frappe.get_all("Anomaly Rule", filters= {"shift_type": shift}, fields="*", limit=1)
 	if anomaly_rules:
+		frappe.cache().set_value(shift, anomaly_rules[0])
 		return anomaly_rules[0]
 	return []
 
@@ -60,7 +65,7 @@ def get_attendance_records(employees, start_date):
 		filters={
 			"employee": ["in", employees],
 			"attendance_date": [">=", ANOMALY_START_DATE],
-			"custom_is_anomaly_rules_applied": 0,
+			# "custom_is_anomaly_rules_applied": 0,
 			"docstatus": 1
 		},
 		fields=[
