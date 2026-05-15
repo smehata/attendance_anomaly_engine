@@ -5,7 +5,10 @@ frappe.ui.form.on("Anomaly Setting", {
 	testing: function (frm) {
 		frappe.call({
 			method: "attendance_anomaly_engine.engine.attendance_process.process_attendance",
-			callback: function (r) {}
+			freeze: true,
+			callback: function (r) {
+				frappe.msgprint(__("Anomaly process added in queue"));
+			}
 		});
 	},
 });

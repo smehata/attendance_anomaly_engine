@@ -7,6 +7,7 @@
  "field_order": [
   "employee",
   "employee_name",
+  "user",
   "column_break_xpaq",
   "date",
   "payroll_difference",
@@ -21,6 +22,7 @@
    "in_standard_filter": 1,
    "label": "Employee ",
    "options": "Employee",
+   "read_only": 1,
    "reqd": 1
   },
   {
@@ -29,7 +31,8 @@
    "fieldname": "employee_name",
    "fieldtype": "Read Only",
    "in_list_view": 1,
-   "label": "Employee Name"
+   "label": "Employee Name",
+   "read_only": 1
   },
   {
    "fieldname": "column_break_xpaq",
@@ -41,13 +44,15 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Date",
+   "read_only": 1,
    "reqd": 1
   },
   {
    "fieldname": "payroll_difference",
    "fieldtype": "Currency",
    "in_list_view": 1,
-   "label": "Payroll Difference"
+   "label": "Payroll Difference",
+   "read_only": 1
   },
   {
    "fieldname": "section_break_ewtx",
@@ -57,14 +62,22 @@
    "fieldname": "resolution_notes",
    "fieldtype": "Text",
    "in_list_view": 1,
-   "label": "Resolution Notes"
+   "label": "Resolution Notes",
+   "read_only": 1
+  },
+  {
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "label": "User",
+   "options": "User",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-05-14 15:34:21.625682",
+ "modified": "2026-05-15 14:39:26.118916",
  "modified_by": "Administrator",
  "module": "Attendance Anomaly Engine",
  "name": "Anomaly Resolution Log",

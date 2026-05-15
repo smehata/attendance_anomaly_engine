@@ -38,7 +38,7 @@
   {
    "fieldname": "testing",
    "fieldtype": "Button",
-   "label": "Testing"
+   "label": "Excute Anomaly Process"
   }
  ],
  "grid_page_length": 50,
@@ -46,7 +46,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-05-14 21:39:18.368217",
+ "modified": "2026-05-15 12:52:11.890465",
  "modified_by": "Administrator",
  "module": "Attendance Anomaly Engine",
  "name": "Anomaly Setting",

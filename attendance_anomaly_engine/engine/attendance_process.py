@@ -31,7 +31,6 @@ def process_attendance():
 	)
 	anomaly_setting = frappe.get_single("Anomaly Setting")
 	BATCH_SIZE = anomaly_setting.batch_size or 50
-	ANOMALY_START_DATE = anomaly_setting.start_date
 
 	for i in range(0, len(employees), BATCH_SIZE):
 		batch = employees[i:i + BATCH_SIZE]
@@ -39,7 +38,6 @@ def process_attendance():
 		job = frappe.enqueue(
 			method=process_attendance_batch,
 			employees=batch,
-			start_date=ANOMALY_START_DATE,
 			queue="long",
 			timeout=1800,
 			enqueue_after_commit=True
@@ -47,12 +45,15 @@ def process_attendance():
 
 
 def get_attendance_records(employees, start_date):
+	anomaly_setting = frappe.get_single("Anomaly Setting")
+	ANOMALY_START_DATE = anomaly_setting.start_date
+
 	attendance_records = frappe.get_all(
 		"Attendance",
 		filters={
 			"employee": ["in", employees],
-			"attendance_date": [">=", start_date],
-			"custom_is_anomaly_rules_applied": 0,
+			"attendance_date": [">=", ANOMALY_START_DATE],
+			# "custom_is_anomaly_rules_applied": 0,
 			"docstatus": 1
 		},
 		fields=[
@@ -78,7 +79,8 @@ def get_attendance_records(employees, start_date):
 	return emp_attendance_group
 
 
-def process_attendance_batch(employees, start_date):
+def process_attendance_batch(employees):
+	start_date = frappe.db.get_single_value("Anomaly Setting", "start_date")
 	emp_attendances = get_attendance_records(employees, start_date)
 	for employee, data in emp_attendances.items():
 		detect_absent_steak_anomaly(employee, data)

@@ -1,8 +1,8 @@
 // Copyright (c) 2026, self and contributors
 // For license information, please see license.txt
 
-// frappe.ui.form.on("Anomaly Resolution Log", {
-// 	refresh(frm) {
-
-// 	},
-// });
+frappe.ui.form.on("Anomaly Resolution Log", {
+	refresh(frm) {
+		frm.disable_save();
+	},
+});

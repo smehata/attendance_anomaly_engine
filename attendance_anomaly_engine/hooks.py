@@ -148,23 +148,11 @@ app_license = "mit"
 # Scheduled Tasks
 # ---------------
 
-# scheduler_events = {
-# 	"all": [
-# 		"attendance_anomaly_engine.tasks.all"
-# 	],
-# 	"daily": [
-# 		"attendance_anomaly_engine.tasks.daily"
-# 	],
-# 	"hourly": [
-# 		"attendance_anomaly_engine.tasks.hourly"
-# 	],
-# 	"weekly": [
-# 		"attendance_anomaly_engine.tasks.weekly"
-# 	],
-# 	"monthly": [
-# 		"attendance_anomaly_engine.tasks.monthly"
-# 	],
-# }
+scheduler_events = {
+	"daily": [
+		"attendance_anomaly_engine.engine.attendance_process.process_attendance"
+	]
+}
 
 # Testing
 # -------
@@ -208,7 +196,15 @@ fixtures = [
 	{"dt": "Custom Field", "filters": [["name", "in",
 				[
 				   "Attendance-custom_is_anomaly_rules_applied",
-				   "Shift Type-custom_is_night_shift"
+				   "Shift Type-custom_is_night_shift",
+					"Salary Structure Assignment-custom_ot_padding",
+					"Salary Structure Assignment-custom_overtime_pay",
+					"Salary Structure Assignment-custom_column_break_7ifqn",
+					"Salary Structure Assignment-custom_ghost_attendance",
+					"Salary Structure Assignment-custom_streak_consecutive",
+					"Salary Structure Assignment-custom_boundry_anomaly",
+					"Salary Structure Assignment-custom_anomaly__charges"
+
 				]
 			]
 		]
