@@ -204,6 +204,16 @@ app_license = "mit"
 # before_job = ["attendance_anomaly_engine.utils.before_job"]
 # after_job = ["attendance_anomaly_engine.utils.after_job"]
 
+fixtures = [
+	{"dt": "Custom Field", "filters": [["name", "in",
+				[
+				   "Attendance-custom_is_anomaly_rules_applied",
+				   "Shift Type-custom_is_night_shift"
+				]
+			]
+		]
+	},
+]
 # User Data Protection
 # --------------------
 

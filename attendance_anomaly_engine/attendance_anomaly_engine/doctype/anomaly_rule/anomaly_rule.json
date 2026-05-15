@@ -1,0 +1,155 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:rule_name",
+ "creation": "2026-05-14 13:08:21.720891",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "rule_name",
+  "shift_type",
+  "column_break_olsr",
+  "is_active",
+  "shift_boundary_section",
+  "late_entry_grace_period",
+  "early_exit_grace_period",
+  "column_break_rret",
+  "half_day_threshold_hours",
+  "night_shifts_consecutive",
+  "streak_detection_section",
+  "consecutive_absences",
+  "column_break_moki",
+  "late_arrivals_days",
+  "overtime_section",
+  "overtime_threshold"
+ ],
+ "fields": [
+  {
+   "fieldname": "rule_name",
+   "fieldtype": "Data",
+   "label": "Rule Name",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "shift_type",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Shift Type",
+   "options": "Shift Type",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_olsr",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Is Active"
+  },
+  {
+   "fieldname": "shift_boundary_section",
+   "fieldtype": "Section Break",
+   "label": "Shift Boundary"
+  },
+  {
+   "default": "0",
+   "description": "The time after the shift start time when check-in is considered as late (in minutes).",
+   "fieldname": "late_entry_grace_period",
+   "fieldtype": "Float",
+   "label": "Late Entry Grace Period"
+  },
+  {
+   "default": "0",
+   "description": "The time before the shift end time when check-out is considered as early (in minutes).",
+   "fieldname": "early_exit_grace_period",
+   "fieldtype": "Float",
+   "label": "Early Exit Grace Period"
+  },
+  {
+   "fieldname": "column_break_rret",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "description": "Working hours below which Half Day is marked. (Zero to disable)",
+   "fieldname": "half_day_threshold_hours",
+   "fieldtype": "Float",
+   "label": "Working Hours Threshold for Half Day"
+  },
+  {
+   "default": "0",
+   "description": "The delta for a night-shift employee after several consecutive night shifts should be auto-waived ( In Days). (Zero to disable)",
+   "fieldname": "night_shifts_consecutive",
+   "fieldtype": "Int",
+   "label": "Night Shifts Consecutive"
+  },
+  {
+   "fieldname": "streak_detection_section",
+   "fieldtype": "Section Break",
+   "label": "Streak Detection"
+  },
+  {
+   "description": "Flag employees with \u2265 no.of Days consecutive absences. (Zero to disable)",
+   "fieldname": "consecutive_absences",
+   "fieldtype": "Int",
+   "label": "Consecutive Absences"
+  },
+  {
+   "fieldname": "column_break_moki",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "description": "Flag employees with  \u2265  no. of days late\narrivals in a rolling 30-day window. (Zero to disable)",
+   "fieldname": "late_arrivals_days",
+   "fieldtype": "Int",
+   "label": "Late Arrivals Days"
+  },
+  {
+   "fieldname": "overtime_section",
+   "fieldtype": "Section Break",
+   "label": "Overtime"
+  },
+  {
+   "default": "0",
+   "description": "Working hours above which OT is marked (worked > shift_end + grace).",
+   "fieldname": "overtime_threshold",
+   "fieldtype": "Float",
+   "label": "Overtime Threshold"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-05-14 22:07:47.974226",
+ "modified_by": "Administrator",
+ "module": "Attendance Anomaly Engine",
+ "name": "Anomaly Rule",
+ "naming_rule": "By fieldname",
+ "owner": "admin@gmail.com",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
