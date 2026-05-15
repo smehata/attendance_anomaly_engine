@@ -12,29 +12,34 @@ def get_anomaly_rule(shift):
 
 
 def create_anomaly_attendance(**data):
-	# Create Attendance Anomaly
+	# Create a new Attendance Anomaly record with provided data and save it to database
 	anomaly_doc = frappe.new_doc("Attendance Anomaly")
 	anomaly_doc.update(data)
 	anomaly_doc.insert(ignore_permissions=True)
 
 
 def mark_in_attendance_anomaly_rule_applied(attendance):
+	# Mark the attendance record to indicate anomaly rules have been applied
 	frappe.db.set_value("Attendance",attendance, "custom_is_anomaly_rules_applied", 1)
 
 
 @frappe.whitelist()
 def process_attendance():
+	# Get all active employees from the system
 	employees = frappe.get_all(
 		"Employee",
 		filters={"status": "Active"},
 		pluck="name"
 	)
+	# Fetch batch size setting to process employees in chunks for better performance
 	anomaly_setting = frappe.get_single("Anomaly Setting")
 	BATCH_SIZE = anomaly_setting.batch_size or 50
 
+	# Divide employees into batches and queue each batch for background processing
 	for i in range(0, len(employees), BATCH_SIZE):
 		batch = employees[i:i + BATCH_SIZE]
 
+		# Enqueue batch job for asynchronous processing with long timeout
 		job = frappe.enqueue(
 			method=process_attendance_batch,
 			employees=batch,
@@ -45,15 +50,17 @@ def process_attendance():
 
 
 def get_attendance_records(employees, start_date):
+	# Get the start date setting for anomaly detection
 	anomaly_setting = frappe.get_single("Anomaly Setting")
 	ANOMALY_START_DATE = anomaly_setting.start_date
 
+	# Fetch all submitted attendance records for given employees from start date onwards
 	attendance_records = frappe.get_all(
 		"Attendance",
 		filters={
 			"employee": ["in", employees],
 			"attendance_date": [">=", ANOMALY_START_DATE],
-			# "custom_is_anomaly_rules_applied": 0,
+			"custom_is_anomaly_rules_applied": 0,
 			"docstatus": 1
 		},
 		fields=[
@@ -68,6 +75,7 @@ def get_attendance_records(employees, start_date):
 		order_by="employee asc, attendance_date asc"
 	)
 
+	# Group attendance records by employee, filter only those with active anomaly rules
 	emp_attendance_group = {}
 	for attendance in attendance_records:
 		anomaly_rules = get_anomaly_rule(attendance.shift)
@@ -80,16 +88,21 @@ def get_attendance_records(employees, start_date):
 
 
 def process_attendance_batch(employees):
+	# Get the start date for anomaly detection
 	start_date = frappe.db.get_single_value("Anomaly Setting", "start_date")
+	# Fetch attendance records for this batch of employees
 	emp_attendances = get_attendance_records(employees, start_date)
+
+	# Run three types of anomaly detection for each employee's attendance records
 	for employee, data in emp_attendances.items():
-		detect_absent_steak_anomaly(employee, data)
-		detect_shift_boundry_and_ghost_anomaly(employee, data)
-		check_overtime_anomaly(employee, data)
+		detect_absent_steak_anomaly(employee, data)  # Check for consecutive absences
+		detect_shift_boundry_and_ghost_anomaly(employee, data)  # Check late/early/ghost anomalies
+		check_overtime_anomaly(employee, data)  # Check for overtime and OT padding
 	# frappe.db.commit()
 
 
 def detect_shift_boundry_and_ghost_anomaly(employee, attendance):
+	# Get system timezone to ensure all time comparisons are in the same timezone
 	timezone = frappe.db.get_single_value("System Settings", "time_zone")
 	tz = ZoneInfo(timezone)
 
@@ -99,13 +112,13 @@ def detect_shift_boundry_and_ghost_anomaly(employee, attendance):
 
 		ghost_flag = False
 
-		# check night shift consecutive, if yes, then twice the late grace period
+		# Check if employee worked consecutive night shifts - if yes, double the late grace period
 		night_shifts_consecutive = anomaly_rules["night_shifts_consecutive"]
 		is_night_s_con = False
 		if cint(night_shifts_consecutive) > 0 and not shift.custom_is_night_shift:
 			is_night_s_con = check_night_shift(employee,record.attendance_date, night_shifts_consecutive)
 
-		# check Late Entry
+		# Detect Late Entry anomaly - check if employee checked in after the grace period
 		checkin = record.in_time
 		if checkin:
 			shift_start = get_time(shift.start_time)
@@ -115,9 +128,11 @@ def detect_shift_boundry_and_ghost_anomaly(employee, attendance):
 			delta = (localized_checkin - localized_shift_start_time).total_seconds() / 60
 			late_grace_period = flt(anomaly_rules["late_entry_grace_period"])
 
+			# Double grace period if consecutive night shifts detected
 			if is_night_s_con:
 				late_grace_period = late_grace_period * 2
 
+			# Create anomaly if check-in delay exceeds grace period
 			if delta > late_grace_period:
 				create_anomaly_attendance(
 					employee=employee,
@@ -131,11 +146,12 @@ def detect_shift_boundry_and_ghost_anomaly(employee, attendance):
 		else:
 			ghost_flag = True
 
-		# check Early Exit
+		# Detect Early Exit anomaly - check if employee checked out before grace period
 		checkout = record.out_time
 		if checkout:
 			end_time = get_time(shift.end_time)
 			checkout_date = record.attendance_date
+			# For night shifts, checkout happens next day
 			if shift.custom_is_night_shift:
 				checkout_date = add_days(record.attendance_date, 1)
 			shift_end_datetime = datetime.combine(checkout_date, end_time)
@@ -144,6 +160,7 @@ def detect_shift_boundry_and_ghost_anomaly(employee, attendance):
 			delta = (localized_shift_end_time - localized_checkout).total_seconds() / 60
 			early_grace_period = flt(anomaly_rules["early_exit_grace_period"])
 
+			# Create anomaly if check-out is too early
 			if delta > early_grace_period:
 				create_anomaly_attendance(
 					employee=employee,
@@ -157,7 +174,8 @@ def detect_shift_boundry_and_ghost_anomaly(employee, attendance):
 		else:
 			ghost_flag = True
 
-		if ghost_flag and record.status not in [ 'Absent', 'On Leave', 'Work From Home' ]:                            #If check-in or checkout missing, then ghost_flag will be true and create an attendance anomaly
+		# Detect Ghost Anomaly - if check-in or check-out is missing (and not on leave/absent)
+		if ghost_flag and record.status not in [ 'Absent', 'On Leave', 'Work From Home' ]:
 			create_anomaly_attendance(
 				employee=employee,
 				attendance=record.name,
@@ -168,41 +186,48 @@ def detect_shift_boundry_and_ghost_anomaly(employee, attendance):
 				description=f"Ghost Anomaly"
 			)
 
+		# Mark that anomaly rules have been applied to this attendance record
 		mark_in_attendance_anomaly_rule_applied(record.name)
 
 
 def detect_absent_steak_anomaly(employee, attendance):
-		streak = 0
-		for record in attendance:
-			shift = frappe.get_doc("Shift Type", record.shift)
-			anomaly_rules = get_anomaly_rule(record.shift)
-			cons_absences = anomaly_rules["consecutive_absences"]
+	# Track consecutive absences to detect absence streaks/patterns
+	streak = 0
+	for record in attendance:
+		shift = frappe.get_doc("Shift Type", record.shift)
+		anomaly_rules = get_anomaly_rule(record.shift)
+		cons_absences = anomaly_rules["consecutive_absences"]
 
-			if cons_absences <= 0:
-				continue
+		# Skip if consecutive absence rule is not configured
+		if cons_absences <= 0:
+			continue
 
-			if record.status == "On Leave":
-				streak = 0
-				continue
+		# Reset streak when employee is on leave (not counted as absence)
+		if record.status == "On Leave":
+			streak = 0
+			continue
 
-			if record.status == "Absent":
-				streak += 1
-			else:
-				streak = 0
+		# Increment streak for absence, reset if present/worked
+		if record.status == "Absent":
+			streak += 1
+		else:
+			streak = 0
 
-			if streak >= cons_absences:
-				create_anomaly_attendance(
-					employee=employee,
-					attendance=record.name,
-					shift=shift.name,
-					date=record.attendance_date,
-					status="Open",
-					type="Streak",
-					description=f"Consecutive Absences >= {streak} days"
-				)
+		# Create anomaly if consecutive absences meet or exceed the threshold
+		if streak >= cons_absences:
+			create_anomaly_attendance(
+				employee=employee,
+				attendance=record.name,
+				shift=shift.name,
+				date=record.attendance_date,
+				status="Open",
+				type="Streak",
+				description=f"Consecutive Absences >= {streak} days"
+			)
 
 
 def check_night_shift(employee, to_date, night_shifts_con):
+	# Check employee night shift consecutive
 	from_date = add_days(to_date, 0 - night_shifts_con)
 	result = frappe.db.sql("""select count(distinct A.name) from `tabAttendance` as A
 		inner join `tabShift Type` as ST on ST.name = A.shift
@@ -219,9 +244,12 @@ def check_overtime_anomaly(employee, attendance):
 	timezone = frappe.db.get_single_value("System Settings", "time_zone")
 	tz = ZoneInfo(timezone)
 	start_date = getdate()
+
+	#Get initial attendance Date from fetch Timesheet Date for OT Padding
 	if attendance:
 		start_date = attendance[0].attendance_date
 
+	#Get employee timesheet data
 	emp_timesheets = get_employee_timesheet(employee, start_date)
 
 	for record in attendance:
@@ -234,6 +262,8 @@ def check_overtime_anomaly(employee, attendance):
 			checkout_date = record.attendance_date
 			if shift.custom_is_night_shift:
 				checkout_date = add_days(record.attendance_date, 1)
+
+			#Convert timezone
 			shift_end_datetime = datetime.combine(checkout_date, end_time)
 			localized_shift_end_time = shift_end_datetime.replace(tzinfo=tz)
 			localized_checkout = checkout.astimezone(tz)
@@ -241,13 +271,14 @@ def check_overtime_anomaly(employee, attendance):
 			overtime_threshold = flt(anomaly_rules["overtime_threshold"]) * 60
 
 			if delta > overtime_threshold:
-				ot_flag = True
+				ot_flag = True  				# set for create OT type anomaly if any ot padding found it's False
 				if emp_timesheets:
 					key = (employee, checkout_date)
 					if key in emp_timesheets.keys():
 						employee_timesheet = emp_timesheets[key]
 						localized_timesheet_time = employee_timesheet['to_time'].astimezone(tz)
 
+						#Check OT padding
 						if localized_checkout < localized_timesheet_time:
 							ot_flag = False
 							create_anomaly_attendance(
@@ -282,7 +313,7 @@ def check_overtime_anomaly(employee, attendance):
 						description=f"OT padding timesheet missing"
 					)
 
-				if ot_flag:
+				if ot_flag: 									 #Create OT attendance anomaly
 					create_anomaly_attendance(
 						employee=employee,
 						attendance=record.name,
@@ -294,8 +325,9 @@ def check_overtime_anomaly(employee, attendance):
 					)
 
 
-
 def get_employee_timesheet(employee, start_date):
+
+	#Get employee attendance form start Date for checking OT padding
 	start_date = add_days(start_date, -1)
 	timesheets = frappe.db.sql("""
 		SELECT
@@ -318,6 +350,7 @@ def get_employee_timesheet(employee, start_date):
 		AND tsd.from_time >= %(from_date)s""", {"employee": employee, "from_date": start_date}, as_dict=True)
 
 	emp_wise_timesheet = {}
+	# Group by date based on Employee and Date
 	if timesheets:
 		for timesheet in timesheets:
 			key = (timesheet.employee, timesheet.end_date)
